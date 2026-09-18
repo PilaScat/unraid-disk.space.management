@@ -298,6 +298,13 @@ for disk in /mnt/disk[0-9]*; do
                         # ----------------------------------------------------------------
                         # VALID FOLDER FOUND - Proceed with move
                         # ----------------------------------------------------------------
+                        target_free=${DISK_SIMULATED_FREE[$(basename "$target")]}
+                        has_space=$(awk -v free="$target_free" -v sz="$size" 'BEGIN { print (free >= sz) }')
+                        if [ "$has_space" -eq 0 ]; then
+                            log_msg "WARNING: Folder '$item' ($size GB) won't fit on target disk $(basename "$target") (${target_free} GB free). Please change your moving sorting order or add more drives to get more space. Skipping to next configured path."
+                            continue
+                        fi
+
                         dst="$target/$rel_path/$(basename "$item")"
                         check_path_safety "$item" "$dst"
                         
@@ -416,3 +423,4 @@ if [ "$NOTIFY" = "true" ]; then
     # -e = event type, -s = subject, -d = display message (HTML), -m = full message (plain text)
     /usr/local/emhttp/plugins/dynamix/scripts/notify -e "Disk Space Management" -s "Run Summary" -d "$ui_body" -m "$agent_msg"
 fi
+

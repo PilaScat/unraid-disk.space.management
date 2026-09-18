@@ -1,4 +1,7 @@
 # Changelog
+## 2026.04.09
+- Feature/Script: Added check to ensure target disk has enough free space to fit the folder being moved. If space is insufficient, a warning is logged and the script moves on to the next configured path.
+
 ## 2026.04.08
 - Script/UI: Fixed an issue on Unraid 7.3.0 beta where saving settings failed with an "AJAX Save Failed" (HTTP 500 or 403 Forbidden) error due to PHP 8.4 changes to `parse_ini_file` and changes to session-based CSRF tokens.
 - UI: Fixed a secondary issue where Unraid's PageRenderer prepended HTML to the AJAX response, preventing the success confirmation from displaying.
