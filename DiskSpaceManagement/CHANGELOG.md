@@ -1,4 +1,11 @@
 # Changelog
+## 2026.09.18
+- Script/UI: Added "Only when a disk was below threshold" to the Notifications setting, to skip the daily "nothing to move" notification.
+- Script: The notification description is now a single plain-text line, so notification agents (Telegram, Discord, Pushover, ...) no longer show literal `<br>`/`<b>` tags. The multi-line summary moved to the notification message (email, archive).
+- Script: The log lines appended to the notification message now use `\n` like the rest of the message. Real newlines broke the archived notification file (the message stopped at the first log line and every other line became a bogus key).
+- Script: The notification is sent with "warning" importance when a disk was below the threshold and nothing could be moved.
+- Script: After a skipped folder (size 0 or failed move) the next folder of the same path is tried. Before, the script fell through to the next managed path and, when every path's first candidate was skipped, stopped with nothing moved.
+
 ## 2026.04.09
 - Feature/Script: Added check to ensure target disk has enough free space to fit the folder being moved. If space is insufficient, a warning is logged and the script moves on to the next configured path.
 
