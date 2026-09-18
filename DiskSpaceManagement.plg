@@ -1009,16 +1009,15 @@ for disk in /mnt/disk[0-9]*; do
                     # - Folder is locked/in use by another process
                     # - Permission issues prevent size calculation
                     #
-                    # BUG FIX: We do NOT use 'continue' here. Instead, we add the item
-                    # to SIMULATED_PROCESSED_PATHS and let the while loop iterate again.
-                    # This ensures the next valid folder is selected from the same path.
+                    # BUG FIX: the item is added to SIMULATED_PROCESSED_PATHS and
+                    # 'continue 2' restarts the while loop, so the next folder of the
+                    # same path is selected instead of falling through to the next path.
                     # ----------------------------------------------------------------
                     if [ -z "$size" ] || [ "$size" == "0.0000" ]; then
                         log_msg "WARNING: Unable to determine size of '$item'. File might be in use/locked or empty. Skipping to avoid loop."
                         SIMULATED_PROCESSED_PATHS+="$item|"
                         SKIPPED_PATHS["$item"]=1
-                        # Don't continue - let the while loop iterate again to try the next item
-                        # This fixes the bug where skipped items prevented further moves on the same disk
+                        continue 2
                     else
                         # ----------------------------------------------------------------
                         # VALID FOLDER FOUND - Proceed with move
@@ -1086,6 +1085,7 @@ for disk in /mnt/disk[0-9]*; do
                                 log_msg "ERROR: Failed to move '$item'. File might be in use/locked. Skipping to avoid loop."
                                 SIMULATED_PROCESSED_PATHS+="$item|"
                                 SKIPPED_PATHS["$item"]=1
+                                continue 2
                             fi
                         fi
                     fi
