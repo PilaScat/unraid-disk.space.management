@@ -390,37 +390,47 @@ log_msg "--- Disk Space Management: Execution Finished ---"
 SCRIPT_END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 
 if [ "$NOTIFY" = "true" ]; then
-    # Build the notification body with HTML for UI and plain text for agents
-    ui_body="Run finished. Total moved: $(printf "%.2f" "$TOTAL_MOVED_GB")GB in $MOVE_COUNT items.<br><br>";
-    [ "$DRY_RUN" == "true" ] && ui_body+="<b>DRY RUN: No files moved.</b><br>";
-    ui_body+="Start: $SCRIPT_START_TIME<br>End: $SCRIPT_END_TIME<br><br><b>Disk Summary:</b><br>"
-    
-    agent_msg="DSM Summary\nTotal: $(printf "%.2f" "$TOTAL_MOVED_GB")GB\n"
-    
+    # Build a one-line plain-text description for the WebUI and the notification agents
+    total_fmt=$(printf "%.2f" "$TOTAL_MOVED_GB")
+    if [ "$DRY_RUN" == "true" ]; then
+        summary="DRY RUN: would move ${total_fmt}GB in $MOVE_COUNT items."
+    elif [ "$ANY_DISK_BELOW_THRESHOLD" = false ]; then
+        summary="All disks above threshold, nothing moved."
+    else
+        summary="Moved ${total_fmt}GB in $MOVE_COUNT items."
+    fi
+
     # Add per-disk-pair move statistics
+    disk_lines=()
     for k in "${!MOVED_FROM_TO_GB[@]}"; do
         src=${k%->*}
-        total=${MOVED_FROM_TO_GB[$k]}
-        final=${DISK_SIMULATED_FREE[$src]}
-        ui_body+=" - $k: $(printf "%.2f" "$total")GB. New free: $(printf "%.2f" "$final")GB.<br>"
-        agent_msg+=" - $k: $(printf "%.2f" "$total")GB. New free: $(printf "%.2f" "$final")GB\n"
+        disk_lines+=("$k: $(printf "%.2f" "${MOVED_FROM_TO_GB[$k]}")GB ($src now $(printf "%.2f" "${DISK_SIMULATED_FREE[$src]}")GB free)")
     done
-    
+
+    description="$summary"
+    if [ "${#disk_lines[@]}" -gt 0 ]; then
+        detail=$(printf '%s; ' "${disk_lines[@]}")
+        description+=" ${detail%; }."
+    fi
+    [ "${#SKIPPED_PATHS[@]}" -gt 0 ] && description+=" Skipped ${#SKIPPED_PATHS[@]} path(s) (size 0/error)."
+
+    message="$summary\nStart: $SCRIPT_START_TIME\nEnd: $SCRIPT_END_TIME\n"
+    if [ "${#disk_lines[@]}" -gt 0 ]; then
+        message+="\nDisk Summary:\n"
+        for line in "${disk_lines[@]}"; do message+=" - $line\n"; done
+    fi
+
     # Add skipped paths section if any paths were skipped
     if [ "${#SKIPPED_PATHS[@]}" -gt 0 ]; then
-        ui_body+="<br><b>Skipped paths (Size 0/Error):</b><br>"
-        agent_msg+="\nSkipped paths (Size 0/Error):\n"
-        for p in "${!SKIPPED_PATHS[@]}"; do
-            ui_body+="$p<br>"
-            agent_msg+="$p\n"
-        done
+        message+="\nSkipped paths (Size 0/Error):\n"
+        for p in "${!SKIPPED_PATHS[@]}"; do message+="$p\n"; done
     fi
 
     # Append first 200 lines of log for agent notifications (email, etc.)
-    agent_msg+="\n--- Log (First 200 lines) ---\n$(head -n 200 "$TEMP_LOG_FILE")"
-    
+    message+="\n--- Log (First 200 lines) ---\n$(head -n 200 "$TEMP_LOG_FILE")"
+
     # Send notification via Unraid's notify system
-    # -e = event type, -s = subject, -d = display message (HTML), -m = full message (plain text)
-    /usr/local/emhttp/plugins/dynamix/scripts/notify -e "Disk Space Management" -s "Run Summary" -d "$ui_body" -m "$agent_msg"
+    # -e = event type, -s = subject, -d = short description (one line, sent as-is to agents), -m = full message (\n separated)
+    /usr/local/emhttp/plugins/dynamix/scripts/notify -e "Disk Space Management" -s "Run Summary" -d "$description" -m "$message"
 fi
 
