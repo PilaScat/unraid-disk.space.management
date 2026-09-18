@@ -1158,9 +1158,12 @@ if [ "$send_notification" = true ]; then
     # Append first 200 lines of log for agent notifications (email, etc.)
     message+="\n--- Log (First 200 lines) ---\n$(head -n 200 "$TEMP_LOG_FILE" | awk '{printf "%s\\n", $0}')"
 
+    importance="normal"
+    [ "$ANY_DISK_BELOW_THRESHOLD" = true ] && [ "$MOVE_COUNT" -eq 0 ] && importance="warning"
+
     # Send notification via Unraid's notify system
-    # -e = event type, -s = subject, -d = short description (one line, sent as-is to agents), -m = full message (\n separated)
-    /usr/local/emhttp/plugins/dynamix/scripts/notify -e "Disk Space Management" -s "Run Summary" -d "$description" -m "$message"
+    # -e = event type, -s = subject, -d = short description (one line, sent as-is to agents), -m = full message (\n separated), -i = importance
+    /usr/local/emhttp/plugins/dynamix/scripts/notify -e "Disk Space Management" -s "Run Summary" -d "$description" -m "$message" -i "$importance"
 fi
 
 ]]>
