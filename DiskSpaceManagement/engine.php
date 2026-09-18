@@ -301,6 +301,7 @@ function render_dsm_ui() {
                             <label class="dsm-label">Notifications</label>
                             <select id="NOTIFY" class="dsm-input">
                                 <option value="true" <?= get_config_val('NOTIFY', 'true') == 'true' ? 'selected' : '' ?>>Enabled</option>
+                                <option value="below_threshold" <?= get_config_val('NOTIFY', 'true') == 'below_threshold' ? 'selected' : '' ?>>Only when a disk was below threshold</option>
                                 <option value="false" <?= get_config_val('NOTIFY', 'true') == 'false' ? 'selected' : '' ?>>Disabled</option>
                             </select>
                         </div>

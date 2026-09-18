@@ -389,7 +389,11 @@ log_msg "--- Disk Space Management: Execution Finished ---"
 # Send a summary notification to the Unraid WebUI and notification agents
 SCRIPT_END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 
-if [ "$NOTIFY" = "true" ]; then
+send_notification=false
+[ "$NOTIFY" = "true" ] && send_notification=true
+[ "$NOTIFY" = "below_threshold" ] && [ "$ANY_DISK_BELOW_THRESHOLD" = true ] && send_notification=true
+
+if [ "$send_notification" = true ]; then
     # Build a one-line plain-text description for the WebUI and the notification agents
     total_fmt=$(printf "%.2f" "$TOTAL_MOVED_GB")
     if [ "$DRY_RUN" == "true" ]; then
