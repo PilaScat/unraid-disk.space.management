@@ -427,7 +427,7 @@ if [ "$NOTIFY" = "true" ]; then
     fi
 
     # Append first 200 lines of log for agent notifications (email, etc.)
-    message+="\n--- Log (First 200 lines) ---\n$(head -n 200 "$TEMP_LOG_FILE")"
+    message+="\n--- Log (First 200 lines) ---\n$(head -n 200 "$TEMP_LOG_FILE" | awk '{printf "%s\\n", $0}')"
 
     # Send notification via Unraid's notify system
     # -e = event type, -s = subject, -d = short description (one line, sent as-is to agents), -m = full message (\n separated)
